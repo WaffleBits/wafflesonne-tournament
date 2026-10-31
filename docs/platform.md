@@ -1,7 +1,7 @@
 # The wafflesonne platform
 
-wafflesonne.com is a Turkish-language Minecraft network I founded in March 2021
-and still operate. 35,225 unique players have joined, and its community has about
+wafflesonne.com is a Turkish-language Minecraft network I founded and have run since 2021.
+35,225 unique players have joined, and its community has about
 700 members on Discord. Everything below runs on one 2 OCPU, 12 GB ARM virtual
 machine.
 
