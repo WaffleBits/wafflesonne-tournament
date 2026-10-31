@@ -1,7 +1,7 @@
 # wafflesonne-tournament
 
 Automatic weekly tournament scheduling for wafflesonne.com, a Minecraft network
-I have run since 2021 with 35,225 unique players. It is a Java 21 Paper plugin
+I have run since August 2020 with 35,225 unique players. It is a Java 21 Paper plugin
 that learns when players are online, commits to a time, and runs the event.
 
 ## The result that shaped it
