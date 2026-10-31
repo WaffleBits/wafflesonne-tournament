@@ -1,0 +1,147 @@
+# WaffleTournament configuration
+
+# ---------------------------------------------------------------------------
+# Activity tracking, feeds the automatic tournament scheduling.
+# ---------------------------------------------------------------------------
+activity:
+  # How often to sample the online player count, in minutes.
+  sample-minutes: 5
+
+  # Half-life of the per-bin activity estimate, in days.
+  #
+  # The week is split into 672 bins of 15 minutes, and each bin keeps an
+  # exponentially weighted estimate of how many players are online then. Decay
+  # is applied to elapsed real time, not to a sample count, so downtime lets
+  # old values fade instead of being treated as if no time had passed.
+  #
+  # A bin is visited once a week, so at 28 days each weekly visit carries
+  # 1 - 0.5^(7/28) = 16% of the new observation: slow enough to shrug off one
+  # unusual evening, quick enough to follow a genuine shift in playing hours.
+  # Lower it to react faster, raise it for a steadier schedule.
+  half-life-days: 28
+
+  # Samples are dropped while a tournament runs and for this long afterwards.
+  # A tournament pulls players in, so counting them would teach the model that
+  # whatever slot it already chose is the busiest, and it would never leave it.
+  exclude-around-tournament-minutes: 60
+
+# ---------------------------------------------------------------------------
+# Scoring, how a candidate start time is judged.
+# ---------------------------------------------------------------------------
+#
+# A tournament is not an instant, so a start time is scored on the whole
+# stretch it occupies rather than on the single bin it begins in. That is what
+# stops one freak 15-minute spike from capturing the schedule.
+scoring:
+  # Minutes before the start to include (players gathering).
+  window-before-minutes: 30
+  # Minutes after the start to include (the rounds playing out).
+  window-after-minutes: 90
+  # Full weight is held from the start through this many minutes in.
+  plateau-minutes: 30
+  # Weight at the two far edges of the window, relative to 1.0 at the centre.
+  edge-weight: 0.3
+
+# ---------------------------------------------------------------------------
+# Scheduling, choosing and committing the next tournament.
+# ---------------------------------------------------------------------------
+#
+# Exactly one upcoming tournament is committed at a time, stored as an absolute
+# timestamp in schedule.yml. The activity model keeps learning while it is
+# pending, but it does NOT move an occurrence that has already been announced.
+# The next selection happens when the current one runs.
+schedule:
+  # Master switch. Nothing starts automatically while this is off.
+  enabled: true
+
+  # The next tournament is searched for inside this window, measured from when
+  # the PREVIOUS one ran. Roughly weekly, while leaving the weekday and time
+  # free to move: Sunday may be followed by Thursday, then Friday, then
+  # Wednesday. Every 15-minute timestamp inside the window is enumerated and
+  # scored, so the spacing is a guarantee rather than a side effect of whichever
+  # weekday happened to win.
+  next-window-min-days: 5
+  next-window-max-days: 9
+
+  # Never schedule outside these hours (server-local, Europe/Istanbul).
+  earliest-hour: 12
+  latest-hour: 22
+
+  # Which days are eligible. Empty means every day.
+  # e.g. [FRIDAY, SATURDAY, SUNDAY]
+  allowed-weekdays: []
+
+  # A bin needs at least this many recorded visits before it can be chosen,
+  # so a slot cannot win on a single lucky observation.
+  minimum-visits: 2
+
+  # Times a tournament may not START, the nightly restart, maintenance. A
+  # window whose end is earlier than its start wraps past midnight.
+  #
+  # This is a scheduling constraint only. The activity model still learns from
+  # these hours, because players really are online then; it simply will not
+  # begin an event that would be interrupted partway through.
+  blackouts:
+    - start: "23:00"
+      end: "00:30"
+
+  # How late a tournament may still start. Without this, a restart or a lag
+  # spike during the scheduled minute would skip the whole week; with it, a
+  # server that comes back 8 minutes late runs 8 minutes late.
+  grace-minutes: 90
+
+  # Reminders before the committed start, in minutes. Each fires once, and
+  # which have fired is persisted so a restart does not repeat them.
+  announce-minutes-before: [1440, 60, 10]
+
+# ---------------------------------------------------------------------------
+# Tournament, ported from tournament.sk
+# ---------------------------------------------------------------------------
+tournament:
+  min-players: 3
+  signup-seconds: 120
+  # Fallback base reward if the baltop placeholders cannot be read.
+  fallback-reward: 5000
+  # Reward scales from 0.1x at min-players to 1.0x at the server slot limit,
+  # on a t^2 curve, so each extra entrant adds more than the last.
+  reward-curve-exponent: 2.0
+  # LuckPerms group granted to the winner, and for how long.
+  winner-group: sampiyon
+  winner-group-duration: 6d23h
+
+  arena:
+    world: empty
+    min-x: -50
+    max-x: -19
+    min-y: 105
+    max-y: 120
+    min-z: 7
+    max-z: 38
+    center-x: -35
+    center-z: 22
+    spawn-y: 112
+    # Players spawn on a ring this far from the centre.
+    spawn-ring: 8
+
+  # Console commands run at each stage. Left configurable because they depend
+  # on plugins outside this one (AnimatedArchitecture doors, arena reset, ...).
+  commands:
+    on-start:
+      - "aa close ArenaDoor"
+      - "arenatemizle"
+    on-end:
+      - "aa open ArenaDoor"
+    on-announce:
+      - "arenahavayifisek"
+    on-winner:
+      - "sampiyontabela {winner}"
+
+# ---------------------------------------------------------------------------
+# Discord, routed through DiscordSRV's console bcast command.
+# ---------------------------------------------------------------------------
+discord:
+  enabled: true
+  # Tournament announcements now go here instead of the old announcements channel.
+  tournament-channel: "1530516191913709588"
+  # Optional second channel for verbose/debug output. Empty disables it.
+  debug-channel: ""

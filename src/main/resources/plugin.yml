@@ -1,0 +1,29 @@
+name: WaffleTournament
+version: '${project.version}'
+main: com.wafflesonne.tournamentplugin.WaffleTournament
+api-version: '1.21'
+author: wafflesonne
+description: Activity tracking, automatic weekly tournament scheduling, and the tournament itself.
+softdepend: [LuckPerms, DiscordSRV, PlaceholderAPI]
+
+commands:
+  tournament:
+    description: Join or leave the running tournament.
+    usage: /tournament <join|leave>
+  starttournament:
+    description: Start a tournament now.
+    permission: waffletournament.admin
+  stoptournament:
+    description: Force-stop the running tournament.
+    permission: waffletournament.admin
+  turnuva:
+    description: Show when the next tournament is scheduled.
+  wtadmin:
+    description: WaffleTournament administration.
+    usage: /wtadmin <status|activity|reschedule|import|reload>
+    permission: waffletournament.admin
+
+permissions:
+  waffletournament.admin:
+    description: Administer WaffleTournament (start/stop, scheduling, imports).
+    default: op
